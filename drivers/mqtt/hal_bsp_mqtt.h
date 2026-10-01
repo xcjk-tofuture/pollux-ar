@@ -62,6 +62,7 @@ int MQTTClient_pub(char *pub_Topic, unsigned char *payloadData, int payloadLen);
  */
 int MQTTClient_sub(void);
 
-extern int8_t (*p_MQTTClient_sub_callback)(const unsigned char *topic, size_t topic_length, const unsigned char *payload, size_t payload_length);
+extern int8_t (*p_MQTTClient_sub_callback)(const unsigned char *topic, size_t topic_length,
+                                           const unsigned char *payload, size_t payload_length);
 
 #endif // !__HAL_BSP_MQTT_H

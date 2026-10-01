@@ -37,15 +37,11 @@ static char g_IP_Addr[20] = {0}; // 连接wifi热点之后，获取到的IP地�
  * @note
  * @retval IP地址-字符串
  */
-char *WiFi_GetLocalIP(void)
-{
-    return g_IP_Addr;
-}
+char *WiFi_GetLocalIP(void) { return g_IP_Addr; }
 /**
  * 获取WiFi的IP地址
  **/
-void Sta_GetWiFiIP(struct netif *netif, char *ip)
-{
+void Sta_GetWiFiIP(struct netif *netif, char *ip) {
     int ret;
     if (netif == NULL) {
         return;
@@ -63,9 +59,10 @@ void Sta_GetWiFiIP(struct netif *netif, char *ip)
 
 #define WIFI_CHANNE 5 // WiFi通道
 
-WifiErrorCode WiFi_createHotspots(const char *ssid, const char *psk)
-{
-    if(!ssid || !psk || strlen(ssid)>=sizeof(((HotspotConfig *)0)->ssid) || strlen(psk)>=sizeof(((HotspotConfig *)0)->preSharedKey)) return ERROR_WIFI_BUSY;
+WifiErrorCode WiFi_createHotspots(const char *ssid, const char *psk) {
+    if (!ssid || !psk || strlen(ssid) >= sizeof(((HotspotConfig *)0)->ssid) ||
+        strlen(psk) >= sizeof(((HotspotConfig *)0)->preSharedKey))
+        return ERROR_WIFI_BUSY;
     WifiErrorCode result;
     printf("Start initialization of WiFi hotspots\r\n");
 
@@ -115,8 +112,7 @@ WifiErrorCode WiFi_createHotspots(const char *ssid, const char *psk)
 }
 
 // 连接WiFi热点时的状态发生改变的回调函数
-static void ConnectionWifiChangedHandler(int state, WifiLinkedInfo *info)
-{
+static void ConnectionWifiChangedHandler(int state, WifiLinkedInfo *info) {
     if (info == NULL) {
         printf("WifiConnectionChanged:info is null.\r\n");
     } else {
@@ -128,8 +124,7 @@ static void ConnectionWifiChangedHandler(int state, WifiLinkedInfo *info)
     }
 }
 // 等待连接热点 默认15s的超时时间
-static int WaitConnectResult(void)
-{
+static int WaitConnectResult(void) {
     int ConnectTimeout = DEF_TIMEOUT;
     while (ConnectTimeout > 0) {
         sleep(1);
@@ -147,10 +142,11 @@ static int WaitConnectResult(void)
 
     return 1;
 }
-WifiErrorCode WiFi_connectHotspots(const char *ssid, const char *psk)
-{
-    if(!ssid || !psk || strlen(ssid)>=sizeof(((WifiDeviceConfig *)0)->ssid) || strlen(psk)>=sizeof(((WifiDeviceConfig *)0)->preSharedKey)) return ERROR_WIFI_BUSY;
-    g_ConnectSuccess=0;
+WifiErrorCode WiFi_connectHotspots(const char *ssid, const char *psk) {
+    if (!ssid || !psk || strlen(ssid) >= sizeof(((WifiDeviceConfig *)0)->ssid) ||
+        strlen(psk) >= sizeof(((WifiDeviceConfig *)0)->preSharedKey))
+        return ERROR_WIFI_BUSY;
+    g_ConnectSuccess = 0;
     WifiErrorCode result;
     int Timeout = 10; // 超时时间 10s
 
@@ -180,11 +176,13 @@ WifiErrorCode WiFi_connectHotspots(const char *ssid, const char *psk)
     // 连接指定的WiFi热点
     WifiDeviceConfig wifiDeviceConfig = {0};
     int wifiResult = 0;
-    strcpy_s(wifiDeviceConfig.ssid, sizeof(wifiDeviceConfig.ssid), ssid);               // 连接WiFi的名称
-    strcpy_s(wifiDeviceConfig.preSharedKey, sizeof(wifiDeviceConfig.preSharedKey), psk);        // WiFi的密码
+    strcpy_s(wifiDeviceConfig.ssid, sizeof(wifiDeviceConfig.ssid), ssid); // 连接WiFi的名称
+    strcpy_s(wifiDeviceConfig.preSharedKey, sizeof(wifiDeviceConfig.preSharedKey),
+             psk);                                     // WiFi的密码
     wifiDeviceConfig.securityType = WIFI_SEC_TYPE_PSK; // WiFi的安全性
     result = AddDeviceConfig(&wifiDeviceConfig, &wifiResult);
-    if ((result == WIFI_SUCCESS) && (ConnectTo(wifiResult) == WIFI_SUCCESS) && (WaitConnectResult() == 1)) {
+    if ((result == WIFI_SUCCESS) && (ConnectTo(wifiResult) == WIFI_SUCCESS) &&
+        (WaitConnectResult() == 1)) {
         printf("wifi connect succeed!.\r\n");
         g_lwip_netif = netifapi_netif_find(SELECT_WLAN_PORT);
         // 启动DHCP
@@ -192,7 +190,8 @@ WifiErrorCode WiFi_connectHotspots(const char *ssid, const char *psk)
             dhcp_start(g_lwip_netif);
         }
 
-        if(!g_lwip_netif) return ERROR_WIFI_BUSY;
+        if (!g_lwip_netif)
+            return ERROR_WIFI_BUSY;
         // 等待DHCP
         for (;;) {
             if (dhcp_is_bound(g_lwip_netif) == ERR_OK) {

@@ -39,7 +39,6 @@ WifiErrorCode WiFi_connectHotspots(const char *ssid, const char *psk);
  * @brief  获取连接WiFi后的本地IP地址
  * @retval IP地址-字符串
  */
-char* WiFi_GetLocalIP(void);
+char *WiFi_GetLocalIP(void);
 
 #endif
-

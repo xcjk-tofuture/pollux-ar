@@ -31,29 +31,36 @@ static int g_tcp_socket_fd = -1; // 网络套接字
 static unsigned char mqttBuff[MQTT_BUFF_MAX_SIZE] = {0};
 
 // 发送网络数据
-static int transport_sendPacketBuffer(unsigned char *buf, int buflen)
-{
-    int sent=0,rc;
-    while(sent<buflen) {rc=send(g_tcp_socket_fd,buf+sent,buflen-sent,0);if(rc<=0) return 0;sent+=rc;}
+static int transport_sendPacketBuffer(unsigned char *buf, int buflen) {
+    int sent = 0, rc;
+    while (sent < buflen) {
+        rc = send(g_tcp_socket_fd, buf + sent, buflen - sent, 0);
+        if (rc <= 0)
+            return 0;
+        sent += rc;
+    }
     return 1;
 }
 // 接收网络数据
-static int transport_getdata(unsigned char *buf, int count)
-{
-    int received=0,rc;
-    while(received<count) {rc=recv(g_tcp_socket_fd,buf+received,count-received,0);if(rc<=0) return -1;received+=rc;}
+static int transport_getdata(unsigned char *buf, int count) {
+    int received = 0, rc;
+    while (received < count) {
+        rc = recv(g_tcp_socket_fd, buf + received, count - received, 0);
+        if (rc <= 0)
+            return -1;
+        received += rc;
+    }
     return received;
 }
 
 // 连接服务器
-int MQTTClient_connectServer(const char *ip_addr, int ip_port)
-{
-    if (ip_addr == NULL || ip_port<=0 || ip_port>65535) {
+int MQTTClient_connectServer(const char *ip_addr, int ip_port) {
+    if (ip_addr == NULL || ip_port <= 0 || ip_port > 65535) {
         return -1;
     }
 
-    int res = 0;                        // 函数返回值
-    struct sockaddr_in tcpServerConfig={0}; // tcp服务器信息
+    int res = 0;                              // 函数返回值
+    struct sockaddr_in tcpServerConfig = {0}; // tcp服务器信息
 
     // 创建TCP套接字
     g_tcp_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -62,29 +69,42 @@ int MQTTClient_connectServer(const char *ip_addr, int ip_port)
         return -1;
     }
 
-    struct timeval timeout={1,0};
-    if(setsockopt(g_tcp_socket_fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout))<0 ||
-       setsockopt(g_tcp_socket_fd,SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout))<0) {
-        MQTTClient_unConnectServer();return -1;
+    struct timeval timeout = {1, 0};
+    if (setsockopt(g_tcp_socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0 ||
+        setsockopt(g_tcp_socket_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
+        MQTTClient_unConnectServer();
+        return -1;
     }
     // 连接TCP服务器
     tcpServerConfig.sin_family = AF_INET;                 // IPV4
     tcpServerConfig.sin_port = htons(ip_port);            // 填写服务器的IP端口号
     tcpServerConfig.sin_addr.s_addr = inet_addr(ip_addr); // 填写服务器的IP地址
 
-    int nonblocking=1;
-    if(ioctl(g_tcp_socket_fd,FIONBIO,&nonblocking)<0) {MQTTClient_unConnectServer();return -1;}
-    res=connect(g_tcp_socket_fd,(struct sockaddr *)&tcpServerConfig,sizeof(tcpServerConfig));
-    if(res<0 && errno==EINPROGRESS) {
-        fd_set writable;FD_ZERO(&writable);FD_SET(g_tcp_socket_fd,&writable);
-        struct timeval connect_timeout={5,0};
-        if(select(g_tcp_socket_fd+1,NULL,&writable,NULL,&connect_timeout)>0) {
-            int socket_error=0;socklen_t error_size=sizeof(socket_error);
-            res=getsockopt(g_tcp_socket_fd,SOL_SOCKET,SO_ERROR,&socket_error,&error_size)==0 && socket_error==0?0:-1;
-        } else res=-1;
+    int nonblocking = 1;
+    if (ioctl(g_tcp_socket_fd, FIONBIO, &nonblocking) < 0) {
+        MQTTClient_unConnectServer();
+        return -1;
     }
-    nonblocking=0;
-    if(ioctl(g_tcp_socket_fd,FIONBIO,&nonblocking)<0) res=-1; // 连接服务器
+    res = connect(g_tcp_socket_fd, (struct sockaddr *)&tcpServerConfig, sizeof(tcpServerConfig));
+    if (res < 0 && errno == EINPROGRESS) {
+        fd_set writable;
+        FD_ZERO(&writable);
+        FD_SET(g_tcp_socket_fd, &writable);
+        struct timeval connect_timeout = {5, 0};
+        if (select(g_tcp_socket_fd + 1, NULL, &writable, NULL, &connect_timeout) > 0) {
+            int socket_error = 0;
+            socklen_t error_size = sizeof(socket_error);
+            res = getsockopt(g_tcp_socket_fd, SOL_SOCKET, SO_ERROR, &socket_error, &error_size) ==
+                              0 &&
+                          socket_error == 0
+                      ? 0
+                      : -1;
+        } else
+            res = -1;
+    }
+    nonblocking = 0;
+    if (ioctl(g_tcp_socket_fd, FIONBIO, &nonblocking) < 0)
+        res = -1; // 连接服务器
     if (res == -1) {
         printf("Failed to connect to the server\r\n");
         MQTTClient_unConnectServer();
@@ -96,8 +116,7 @@ int MQTTClient_connectServer(const char *ip_addr, int ip_port)
 }
 
 // 断开TCP服务器 0:成功, -1:失败
-int MQTTClient_unConnectServer(void)
-{
+int MQTTClient_unConnectServer(void) {
     int ret = 0;
     printf("Server shut down successfully\r\n");
     ret = close(g_tcp_socket_fd);
@@ -106,8 +125,7 @@ int MQTTClient_unConnectServer(void)
 }
 
 // mqtt客户端 订阅主题
-int MQTTClient_subscribe(char *subTopic)
-{
+int MQTTClient_subscribe(char *subTopic) {
     if (subTopic == NULL) {
         printf("Incorrect parameters\r\n");
         return -1;
@@ -140,7 +158,8 @@ int MQTTClient_subscribe(char *subTopic)
         return -1;
     }
 
-    if (MQTTDeserialize_suback(&submsgid, 1, &subcount, &granted_qos, mqttBuff, sizeof(mqttBuff)) != 1) {
+    if (MQTTDeserialize_suback(&submsgid, 1, &subcount, &granted_qos, mqttBuff, sizeof(mqttBuff)) !=
+        1) {
         printf("MQTTDeserialize_suback Error\r\n");
         return -1;
     }
@@ -155,8 +174,7 @@ int MQTTClient_subscribe(char *subTopic)
 #define MQTT_DELAY_TIME 3
 
 // mqtt客户端 初始化
-int MQTTClient_init(char *clientID, char *userName, char *password)
-{
+int MQTTClient_init(char *clientID, char *userName, char *password) {
     if (clientID == NULL || userName == NULL || password == NULL) {
         printf("Incorrect parameters\r\n");
         return -1;
@@ -172,7 +190,7 @@ int MQTTClient_init(char *clientID, char *userName, char *password)
     mqttData.clientID.cstring = clientID;
     mqttData.username.cstring = userName;
     mqttData.password.cstring = password;
-    mqttData.cleansession = true;  // 是否初始化的时候，清除上一次的对话
+    mqttData.cleansession = true; // 是否初始化的时候，清除上一次的对话
     mqttData.keepAliveInterval = MQTT_KEEP_ALIVE;
 
     // 组MQTT消息包
@@ -210,7 +228,8 @@ int MQTTClient_init(char *clientID, char *userName, char *password)
     }
     printf("\r\n");
 
-    if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqttBuff, sizeof(mqttBuff)) != 1 || connack_rc != 0) {
+    if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqttBuff, sizeof(mqttBuff)) != 1 ||
+        connack_rc != 0) {
         printf("Unable to connect, return code %d\r\n", connack_rc);
         memset_s(mqttBuff, sizeof(mqttBuff), 0, sizeof(mqttBuff));
         return -1;
@@ -223,8 +242,7 @@ int MQTTClient_init(char *clientID, char *userName, char *password)
 
 #define MQTT_PUB_DATA_TIME (100 * 1000)
 
-int MQTTClient_pub(char *pub_Topic, unsigned char *payloadData, int payloadLen)
-{
+int MQTTClient_pub(char *pub_Topic, unsigned char *payloadData, int payloadLen) {
     if (payloadData == NULL) {
         printf("Incorrect parameters\r\n");
         return -1;
@@ -239,8 +257,7 @@ int MQTTClient_pub(char *pub_Topic, unsigned char *payloadData, int payloadLen)
     MQTTString topicString = MQTTString_initializer;
 
     topicString.cstring = pub_Topic;
-    len = MQTTSerialize_publish(sendBuff, sizeof(sendBuff), 0, 0, 0, 0, topicString,
-                                payloadData,
+    len = MQTTSerialize_publish(sendBuff, sizeof(sendBuff), 0, 0, 0, 0, topicString, payloadData,
                                 payloadLen);
     while (--retry_count > 0) {
         ret = transport_sendPacketBuffer(sendBuff, len);
@@ -261,17 +278,24 @@ int MQTTClient_pub(char *pub_Topic, unsigned char *payloadData, int payloadLen)
     return 0;
 }
 
-int8_t (*p_MQTTClient_sub_callback)(const unsigned char *,size_t,const unsigned char *,size_t);
+int8_t (*p_MQTTClient_sub_callback)(const unsigned char *, size_t, const unsigned char *, size_t);
 int MQTTClient_sub(void) {
-    int qos,length,type;unsigned char dup,retained,*payload;
-    unsigned short message_id;MQTTString topic=MQTTString_initializer;
-    memset(mqttBuff,0,sizeof(mqttBuff));
-    type=MQTTPacket_read(mqttBuff,sizeof(mqttBuff),transport_getdata);
-    if(type<=0) return -1;
-    if(type!=PUBLISH) return 0;
-    if(MQTTDeserialize_publish(&dup,&qos,&retained,&message_id,&topic,&payload,&length,mqttBuff,sizeof(mqttBuff))!=1 ||
-       length<0 || topic.lenstring.len<0 || !payload || !topic.lenstring.data) return -1;
-    if(p_MQTTClient_sub_callback)
-        return p_MQTTClient_sub_callback((const unsigned char *)topic.lenstring.data,(size_t)topic.lenstring.len,payload,(size_t)length);
+    int qos, length, type;
+    unsigned char dup, retained, *payload;
+    unsigned short message_id;
+    MQTTString topic = MQTTString_initializer;
+    memset(mqttBuff, 0, sizeof(mqttBuff));
+    type = MQTTPacket_read(mqttBuff, sizeof(mqttBuff), transport_getdata);
+    if (type <= 0)
+        return -1;
+    if (type != PUBLISH)
+        return 0;
+    if (MQTTDeserialize_publish(&dup, &qos, &retained, &message_id, &topic, &payload, &length,
+                                mqttBuff, sizeof(mqttBuff)) != 1 ||
+        length < 0 || topic.lenstring.len < 0 || !payload || !topic.lenstring.data)
+        return -1;
+    if (p_MQTTClient_sub_callback)
+        return p_MQTTClient_sub_callback((const unsigned char *)topic.lenstring.data,
+                                         (size_t)topic.lenstring.len, payload, (size_t)length);
     return 0;
 }
