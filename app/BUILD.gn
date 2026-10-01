@@ -1,0 +1,22 @@
+static_library("main") {
+  sources = [
+    "main.c", "../services/ui_model.c", "../services/messages.c", "../os/beihe_mailbox.c", "../platform/hi3861/board_io.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTConnectClient.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTConnectServer.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTDeserializePublish.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTFormat.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTPacket.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSerializePublish.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSubscribeClient.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSubscribeServer.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTUnsubscribeServer.c",
+    "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTUnsubscribeClient.c",
+  ]
+  include_dirs = [
+    "//utils/native/lite/include", "//kernel/liteos_m/kal/cmsis",
+    "//foundation/communication/wifi_lite/interfaces/wifiservice",
+    "//base/iot_hardware/peripheral/interfaces/kits", "//third_party/cJSON",
+    "../drivers/wifi", "../drivers/spi_st7789", "../drivers/mqtt",
+    "../boards/hi3861", "../platform/hi3861", "../services", "../os",
+  ]
+}

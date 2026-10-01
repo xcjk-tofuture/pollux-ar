@@ -1,12 +1,4 @@
-
 import("//build/lite/config/component/lite_component.gni")
-
 lite_component("app") {
-    features = [
-        "main:main",
-        "driver/wifi:bsp_wifi",
-        "driver/spi_st7789:spi_st7789",
-        "driver/mqtt:bsp_mqtt"
-        "driver/lvgl:lvgl"
-    ]
+  features = ["app:main", "drivers/wifi:bsp_wifi", "drivers/spi_st7789:spi_st7789", "drivers/mqtt:bsp_mqtt"]
 }
