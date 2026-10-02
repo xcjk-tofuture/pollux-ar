@@ -1,19 +1,27 @@
-# 架构与模块接口
+# 北河 AR 架构
 
-```mermaid
-flowchart TD
-    A[app: 状态机与启动编排] --> S[services: 控制/采集/通信/显示/参数]
-    S --> G[algorithms: 调用者持有算法上下文]
-    S --> D[drivers: 设备接口]
-    D --> P[platform: 芯片与总线适配]
-    P --> V[厂商 SDK/硬件]
-    A --> B[boards: 资源与参数]
-    A --> O[os: 任务/队列/互斥/快照]
-    S --> O
-```
+## 应用入口
 
-公共算法与协议接口只有标准 C 数据类型，算法不包含 HAL/RTOS/业务主头文件。任务拥有运行状态；通信提交命令，显示与遥测读取快照。旧设备实现保留源头注释；legacy 表示保留接口命名的适配区，不允许新增跨模块可写 extern 状态。头文件包含循环已检查；这不等于证明所有运行时依赖或调用时序。
+`app/main.c` 通过 `SYS_RUN(beihe_start)` 注册到原海思/OpenHarmony 启动框架。
+`beihe_start` 创建深度 4 的事件邮箱，再创建 UI 和 Network 两个 CMSIS-RTOS2 线程。两线程栈各 4096 字节，UI 为 AboveNormal，Network 为 Normal。
 
-协议回调中的帧借用仅在同步调用内有效，异步处理必须复制。控制命令按值入队且不阻塞，队列满返回 busy；原始 UART 接收队列丢包后重置解码器，目标速度受 500ms 超时保护。任务快照用短临界区复制，临界区里不进行 I/O、计算或等待。设备接口按各头文件约定调用上下文、单位与返回值；初始化在启动编排中检查创建结果。
+## 模块与数据流
 
-malloc/栈溢出/断言/致命设备错误进入停止输出并锁定的故障路径；恢复要求复位与重新初始化。现有工程没有已验证的硬件看门狗恢复，不能宣称自动恢复或自动重新解锁。看门狗接线、超时、复位原因记录和启动回归列入硬件验收。
+| 目录 | 职责 |
+|---|---|
+| `app` | 连接编排、消息回调与 UI 事件消费 |
+| `services/messages.c` | cJSON 检查 `center` 字符串 |
+| `services/ui_model.c` | 连接状态、文本和解析错误计数 |
+| `os/beihe_mailbox.c` | 有界事件副本传递，非阻塞投递 |
+| `drivers/wifi`、`drivers/mqtt` | 原网络设备接口 |
+| `drivers/spi_st7789` | 显示初始化及基线绘制 |
+| `platform/hi3861` | 板载 IO 适配 |
+| `boards/hi3861/beihe_board.h` | 部署配置、节拍和接收开关 |
+
+Network：Wi-Fi → TCP → MQTT → 订阅 → Ready/故障。
+`on_payload` 校验 topic 与长度后复制消息到邮箱；UI 线程取事件，解析 JSON 并更新自己拥有的模型。回调不修改显示业务。
+
+`BEIHE_ENABLE_MQTT_RECEIVE=0`，订阅后网络线程退出，不运行持续接收或重连。
+消息模型更新后只打印文本；等待超时时调用 `beihe_display_baseline` 绘制原测试图案。模型文本尚未接入完整消息页面。
+
+没有独立业务算法需求的目录不强行填充。该工程使用 Wi-Fi/MQTT，不采用底盘/无人机的串口协议。

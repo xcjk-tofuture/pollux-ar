@@ -1,11 +1,8 @@
-# beihe_AR_Hi3861 重构基线
+# 北河 AR Hi3861
 
-候选 TODO 尚未开发；GitHub 尚未推送。
+Hi3861 / LiteOS-M 的 Wi-Fi、MQTT 与显示工程，保留原海思构建环境作源码存档。
 
-- [架构与接口](docs/ARCHITECTURE.md)
-- [任务和资源](docs/TASKS.md)
-- [构建与烧录](docs/BUILD.md)
-- [测试和验收边界](docs/ACCEPTANCE.md)
-- [候选 TODO](docs/TODO.md)
-- [回滚与 Git 流程](docs/ROLLBACK.md)
-- [源码版本与来源](docs/SOURCES.md)
+- [入口、架构与任务](docs/ARCHITECTURE.md)
+- [构建、验证与版本兼容](docs/BUILD.md)
+- [未完成工作](docs/TODO.md)
+- [依赖与来源](docs/SOURCES.md)
