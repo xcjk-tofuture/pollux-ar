@@ -1,4 +1,4 @@
-# 北河 AR 构建
+# Pollux AR 构建
 
 保留原 Hi3861 SDK、GN/hb、LiteOS-M 与 CMSIS-RTOS2。`app/BUILD.gn` 列出应用源文件和原 SDK 依赖，各驱动保留各自 GN 配置。
 在匹配的原 SDK 中接入 applications 路径及构建依赖，使用该 SDK 的 hb 配置；仓库不能独立替代完整 SDK，精确 SDK 版本未能唯一确认。
